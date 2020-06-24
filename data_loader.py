@@ -70,9 +70,10 @@ def build_vocab(train_dir, vocab_dir, vocab_size=5000):
 
     all_data = []
     for content in data_train:
-        all_data.extend(content)
+        print(content)
+        all_data.extend(content.split(' '))#会将里面的元素进行切割
 
-    counter = Counter(all_data)
+    counter = Counter(all_data) #可以自动统计列表中的词频。
     count_pairs = counter.most_common(vocab_size - 1)
     words, _ = list(zip(*count_pairs))
     # 添加一个 <PAD> 来将所有文本pad为同一长度
@@ -93,7 +94,7 @@ def read_vocab(vocab_dir):
 ''
 def read_category():
     """读取分类目录，固定"""
-    categories = ['1', '2', '3', '4', '5']
+    categories = ['0','1', '2', '3']
 
     categories = [native_content(x) for x in categories]
 
@@ -112,9 +113,10 @@ def process_file(filename, word_to_id, cat_to_id, max_length=600):
     contents, labels = read_file(filename)  # 读取训练数据的每一句话及其所对应的类别
     data_id, label_id = [], []
     for i in range(len(contents)):
-        data_id.append([word_to_id[x] for x in contents[i] if x in word_to_id])  # 将每句话id化
-        print(cat_to_id[labels[i]])
-        label_id.append(cat_to_id[labels[i]])  # 每句话对应的类别的id
+
+        data_id.append([word_to_id[x] for x in contents[i].split(' ') if x in word_to_id])  # 将每句话id化
+        print(str(labels[i]))
+        label_id.append(cat_to_id[str(labels[i]).strip()])  # 每句话对应的类别的id
     #
     # # 使用keras提供的pad_sequences来将文本pad为固定长度
     x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length)

@@ -6,7 +6,9 @@ from torch import nn
 from torch import optim
 from torch.autograd import Variable
 import os
-
+import sys
+from collections import Counter
+import joblib
 import numpy as np
 
 from model import TextRNN, TextCNN
@@ -21,6 +23,8 @@ vocab_dir = os.path.join(base_dir, 'vocab.txt')
 
 def train():
     x_train, y_train = process_file(train_dir, word_to_id, cat_to_id, 600)  # 获取训练数据每个字的id和对应标签的one-hot形式
+    print(len(x_train))
+    print(len(y_train))
     x_val, y_val = process_file(val_dir, word_to_id, cat_to_id, 600)
     # 使用LSTM或者CNN
     model = TextRNN()
@@ -46,9 +50,19 @@ def train():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            counter = Counter(torch.abs(torch.argmax(out, 1) - torch.argmax(y, 1)).detach().numpy().tolist())
+            print(counter)
+            #count_pairs = counter.most_common(vocab_size - 1)
+
+
+            print("我是误差请@我", (counter[1]+counter[0]+counter[2])/100.0)
+
+            # print("我是误差请@我", (torch.argmax(out, 1) - torch.argmax(y, 1)) == 0 or (torch.abs(
+            #     torch.argmax(out, 1) - torch.argmax(y, 1)) == 1))
             accracy = np.mean((torch.argmax(out, 1) == torch.argmax(y, 1)).numpy())
+            print(accracy)
         # 对模型进行验证
-        if (epoch + 1) % 20 == 0:
+        if (epoch + 1) % 2 == 0:
             batch_val = batch_iter(x_val, y_val, 100)
             for x_batch, y_batch in batch_train:
                 x = np.array(x_batch)
@@ -63,6 +77,8 @@ def train():
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+
+
                 accracy = np.mean((torch.argmax(out, 1) == torch.argmax(y, 1)).numpy())
                 if accracy > best_val_acc:
                     torch.save(model.state_dict(), 'model_params.pkl')
